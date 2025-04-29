@@ -59,4 +59,9 @@ public class CiterneController {
         citerneService.deleteCiterne(id);
         return ResponseEntity.noContent().build();
     }
+
+
+
+
+
 }

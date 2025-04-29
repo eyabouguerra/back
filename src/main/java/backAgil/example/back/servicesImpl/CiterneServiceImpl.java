@@ -43,4 +43,7 @@ public class CiterneServiceImpl implements CiterneService {
     public void deleteCiterne(Long id) {
         citerneRepository.deleteById(id);
     }
+
+
+
 }

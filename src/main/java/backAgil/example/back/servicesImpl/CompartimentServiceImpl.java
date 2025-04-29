@@ -88,25 +88,13 @@ public class CompartimentServiceImpl implements CompartimentService {
 
     @Override
     public Compartiment updateCompartiment(Long id, Compartiment newCompartiment) {
-        return compartimentRepository.findById(id).map(compartiment -> {
-            if (newCompartiment.getCiterne() == null || newCompartiment.getCiterne().getId() == null) {
-                throw new IllegalArgumentException("Citerne must be provided for the compartiment");
-            }
-
-            // Valider l'existence du Citerne
-            Citerne citerne = citerneRepository.findById(newCompartiment.getCiterne().getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Citerne does not exist"));
-
-            compartiment.setCapaciteMax(newCompartiment.getCapaciteMax());
-            compartiment.setStatut(newCompartiment.getStatut());
-            compartiment.setCiterne(citerne);
-
-            // Mettre à jour la référence si elle est présente
-            if (newCompartiment.getReference() != null && !newCompartiment.getReference().isEmpty()) {
-                compartiment.setReference(newCompartiment.getReference());
-            }
-
-            return compartimentRepository.save(compartiment);
+        return compartimentRepository.findById(id).map(existing -> {
+            existing.setCapaciteMax(newCompartiment.getCapaciteMax());
+            existing.setReference(newCompartiment.getReference());
+            existing.setStatut(newCompartiment.getStatut());
+            existing.setTypeProduit(newCompartiment.getTypeProduit());
+            // Ne pas changer la citerne si ce n’est pas voulu
+            return compartimentRepository.save(existing);
         }).orElse(null);
     }
 

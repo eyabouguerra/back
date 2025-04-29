@@ -56,6 +56,7 @@ public class CompartimentController {
     }
 
 
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCompartiment(@PathVariable Long id) {
         try {
