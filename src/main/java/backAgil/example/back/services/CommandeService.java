@@ -12,4 +12,5 @@ public interface CommandeService {
     public Commande addCommande(Commande commande);
     public Commande editCommande(Commande c);
 
+    boolean checkCodeCommandeExists(String codeCommande);
 }

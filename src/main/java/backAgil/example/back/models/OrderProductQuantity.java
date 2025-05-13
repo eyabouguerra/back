@@ -1,15 +1,14 @@
 package backAgil.example.back.models;
 
-
 public class OrderProductQuantity {
     private Long id;
-    private Long quantity;
+    private int quantity;
 
-    public Long getQuantity() {
-        return quantity;
+    public OrderProductQuantity() {
     }
 
-    public void setQuantity(Long quantity) {
+    public OrderProductQuantity(Long id, int quantity) {
+        this.id = id;
         this.quantity = quantity;
     }
 
@@ -19,5 +18,13 @@ public class OrderProductQuantity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 }

@@ -14,4 +14,6 @@ public interface ProduitService {
 
     List<Produit> getProduitsByType(Long typeId);
     List<Produit>  getProductDetails(boolean isSingleProductCheckout,Long id);
+
+    Produit getProductById(Long id);
 }

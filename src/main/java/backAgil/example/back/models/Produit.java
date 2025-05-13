@@ -33,6 +33,12 @@ public class Produit {
     @JsonBackReference
     private TypeProduit typeProduit;
 
+
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    private Order order;
+
+
     public Produit() {}
 
     public Produit(String codeProduit, String nomProduit, String libelle, float prix, Date date, String description , TypeProduit typeProduit) {

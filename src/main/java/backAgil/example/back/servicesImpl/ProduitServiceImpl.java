@@ -22,6 +22,10 @@ public class ProduitServiceImpl implements ProduitService { // Implémentez l'in
     @Autowired
     private CartRepository cRepo;
 
+    @Autowired
+    private ProduitRepository produitRepository;
+
+
     @Override
     public List<Produit> getAllProduits() {
         return pRepo.findAll();
@@ -115,5 +119,11 @@ public class ProduitServiceImpl implements ProduitService { // Implémentez l'in
         }
     }
 
+
+    @Override
+    public Produit getProductById(Long id) {
+        return produitRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
+    }
 
 }

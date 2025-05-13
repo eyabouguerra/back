@@ -1,8 +1,10 @@
 package backAgil.example.back.servicesImpl;
 
+import backAgil.example.back.models.Client;
 import backAgil.example.back.models.Commande;
 import backAgil.example.back.models.CommandeProduit;
 import backAgil.example.back.models.Produit;
+import backAgil.example.back.repositories.ClientRepository;
 import backAgil.example.back.repositories.CommandeRepository;
 import backAgil.example.back.repositories.ProduitRepository;
 import backAgil.example.back.repositories.commandeProduitRepository;
@@ -18,11 +20,15 @@ public class CommandeServiceImpl implements CommandeService {
 
     @Autowired
     private CommandeRepository cRepo;
+
     @Autowired
-    private commandeProduitRepository  commandeProduitRepository;
+    private commandeProduitRepository commandeProduitRepository;
 
     @Autowired
     private ProduitRepository pRepo;
+
+    @Autowired
+    private ClientRepository clientRepository; // Inject ClientRepository
 
     @Override
     public List<Commande> getAllCommandes() {
@@ -40,16 +46,18 @@ public class CommandeServiceImpl implements CommandeService {
                     produit.getTypeProduit(); // force le chargement du type de produit
                 }
             });
+            // Initialiser le client si nécessaire
+            if (commande.getClient() != null) {
+                commande.getClient().getFullName(); // force le chargement du client
+            }
         }
         return commande;
     }
-
 
     @Override
     public void deleteCommandeById(Long id) {
         cRepo.deleteById(id);
     }
-
 
     @Override
     public Commande addCommande(Commande commande) {
@@ -57,12 +65,35 @@ public class CommandeServiceImpl implements CommandeService {
             commande.setCommandeProduits(new ArrayList<>());
         }
 
+        // Handle client creation or association
+        if (commande.getClient() != null) {
+            Client client = commande.getClient();
+            if (client.getClientId() == null && client.getFullName() != null) {
+                // Create a new client
+                Client newClient = new Client();
+                newClient.setFullName(client.getFullName());
+                newClient.setFullAddress(client.getFullAddress());
+                newClient.setContactNumber(client.getContactNumber());
+                client = clientRepository.save(newClient);
+                commande.setClient(client);
+            } else if (client.getClientId() != null) {
+                // Use existing client
+                client = clientRepository.findById(client.getClientId())
+                        .orElseThrow(() -> new IllegalArgumentException("Client non trouvé"));
+                commande.setClient(client);
+            } else {
+                throw new IllegalArgumentException("Les détails du client sont incomplets");
+            }
+        }
+
         List<CommandeProduit> commandeProduits = new ArrayList<>();
         Float totalPrice = 0.0f;
 
         for (CommandeProduit cp : commande.getCommandeProduits()) {
-            Produit produit = cp.getProduit();
+            Produit produit = pRepo.findById(cp.getProduit().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Produit non trouvé"));
 
+            cp.setProduit(produit);
             if (cp.getQuantite() == null || cp.getQuantite() <= 0) {
                 cp.setQuantite(1.0f);
             }
@@ -77,12 +108,11 @@ public class CommandeServiceImpl implements CommandeService {
 
         commande.setTotalPrice(totalPrice);
 
-        cRepo.save(commande); // cascade: Commande + ses CommandeProduits
-        commandeProduitRepository.saveAll(commandeProduits); // optionnel si cascade
+        Commande savedCommande = cRepo.save(commande);
+        commandeProduitRepository.saveAll(commandeProduits);
 
-        return commande;
+        return savedCommande;
     }
-
     @Override
     public Commande editCommande(Commande updatedCommande) {
         Commande existingCommande = cRepo.findById(updatedCommande.getId())
@@ -94,11 +124,23 @@ public class CommandeServiceImpl implements CommandeService {
         existingCommande.setPrice(updatedCommande.getPrice());
         existingCommande.setTotalPrice(updatedCommande.getTotalPrice());
 
+        // Update client if provided
+        if (updatedCommande.getClient() != null && updatedCommande.getClient().getClientId() != null) {
+            Client client = clientRepository.findById(updatedCommande.getClient().getClientId())
+                    .orElseThrow(() -> new IllegalArgumentException("Client non trouvé"));
+            existingCommande.setClient(client);
+        } else {
+            existingCommande.setClient(null); // Allow clearing the client if needed
+        }
+
         // Supprimer les anciennes relations et ajouter les nouvelles
         existingCommande.getCommandeProduits().clear();
         if (updatedCommande.getCommandeProduits() != null) {
             for (CommandeProduit cp : updatedCommande.getCommandeProduits()) {
-                cp.setCommande(existingCommande);  // rattache la commande
+                Produit produit = pRepo.findById(cp.getProduit().getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Produit non trouvé"));
+                cp.setProduit(produit);
+                cp.setCommande(existingCommande); // rattache la commande
                 existingCommande.getCommandeProduits().add(cp);
             }
         }
@@ -106,4 +148,8 @@ public class CommandeServiceImpl implements CommandeService {
         return cRepo.save(existingCommande);
     }
 
+    @Override
+    public boolean checkCodeCommandeExists(String codeCommande) {
+        return cRepo.existsByCodeCommande(codeCommande);
+    }
 }
